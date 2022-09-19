@@ -2,10 +2,9 @@ const client = require("./connection.js");
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const axios = require('axios');
-
-
-const port = 4000;
+//const axios = require('axios');
+const port = 3000;
+ 
 
 app.use(cors());
 
@@ -40,13 +39,13 @@ app.use(bodyParser.json());
 app.post("/users", (req, res) => {
   const user = req.body;
   console.log(req.body);
-  let insertQuery = `INSERT INTO users(email,lastame,firstName,phoneNumber,password) 
-VALUES("hdhdh@gmail.com", "jdhdhd", "dddhdhd", "dddd", "ddddd")`;
+  let insertQuery = `insert into users(email,lastname,firstname,phonenumber,password) 
+values('${user.email}', '${user.lastname}', '${user.firstname}', '${user.phonenumber}', '${user.password}')`;
   client.query(insertQuery, (err) => {
     if (!err) {
-      res.send("Insertion was successful");
+      res.send("Insert was successful");
     } else {
-      console.log(err.message);
+      console.log(err.message.details[0]);
     }
   });
   client.end;
@@ -55,12 +54,12 @@ VALUES("hdhdh@gmail.com", "jdhdhd", "dddhdhd", "dddd", "ddddd")`;
 app.put("/users/:id", (req, res) => {
   let user = req.body;
   let updateQuery = `update users
-                         set lastName = '${user.lastName}',
-                         firstName = '${user.firstName}',
-                         phoneNumber = '${user.phoneNumber}',
-                         password = '${user.password}',
-                         email = '${user.email}',
-                         where id = '${user.id}`;
+                       set lastname = '${user.lastname}',
+                       firstname = '${user.firstname}',
+                       phonenumber = '${user.phonenumber}',
+                       password = '${user.password}',
+                       email = '${user.email}'
+                       where id = ${user.id}`
 
   client.query(updateQuery, (err, result) => {
     if (!err) {
@@ -71,12 +70,11 @@ app.put("/users/:id", (req, res) => {
   });
   client.end;
 });
-
 app.delete("/users/:id", (req, res) => {
   let insertQuery = `delete from users where id=${req.params.id}`;
   client.query(insertQuery, (err) => {
     if (!err) {
-      res.send("Deletion was successful");
+      res.send("Delete was successful");
     } else {
       console.log(err.message);
     }
@@ -84,16 +82,17 @@ app.delete("/users/:id", (req, res) => {
   client.end;
 });
 //calling Apis
-//Axios.get("http://localhost:3000/users")
+//axios.get("http://localhost:5000/users")
 //.then((res) => console.log(res))
-// .catch((err) => console.error(err));
+//.catch((err) => console.error(err, err.response));
 
-//Axios.post("http://localhost:3000/users", {
+//axios.post("http://localhost:3000/users/register", {
 //id: "7",
 //email: "rtrt@gmail.com",
-//firstName: "jkjkj",
-//lastName: "hjhjh",
-//password: "1234",
+//firstname: "jkjkj",
+//lastNname: "hjhjh",
+//phonenumber: "0780988765",
+//password: "1234"
 //})
 //.then((res) => showoutput(res))
-// .catch((err) => console.error(err));
+ //.catch((err) => console.error(err, err.response));
