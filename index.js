@@ -4,7 +4,8 @@ const cors = require("cors");
 const app = express();
 //const axios = require('axios');
 const port = 3000;
- 
+
+const { celebrate, Joi, errors, Segments } = require('celebrate');
 
 app.use(cors());
 
@@ -36,20 +37,36 @@ app.get("/users/:id", (req, res) => {
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
-app.post("/users", (req, res) => {
-  const user = req.body;
-  console.log(req.body);
-  let insertQuery = `insert into users(email,lastname,firstname,phonenumber,password) 
+app.post(
+  "/users",
+  celebrate({
+    [Segments.BODY]: Joi.object().keys({
+      email: Joi.string().required(),
+      lastname: Joi.string().required(),
+      firstname: Joi.string().required(),
+      phonenumber: Joi.number().required(),
+      password: Joi.string().min(4).required()
+    })
+  }),
+  (req, res) => {
+    const user = req.body;
+    console.log(req.body);
+    if (!user.email || !user.password || !user.lastname)
+      res.send({ status: 400, message: "Please fill all fields" });
+
+    let insertQuery = `insert into users(email,lastname,firstname,phonenumber,password) 
 values('${user.email}', '${user.lastname}', '${user.firstname}', '${user.phonenumber}', '${user.password}')`;
-  client.query(insertQuery, (err) => {
-    if (!err) {
-      res.send("Insert was successful");
-    } else {
-      console.log(err.message.details[0]);
-    }
-  });
-  client.end;
-});
+    client.query(insertQuery, (err) => {
+      if (!err) {
+        res.send("Insert was successful");
+      } else {
+        console.log(err.message.details[0]);
+        res.send("there was an error");
+      }
+    });
+    client.end;
+  }
+);
 
 app.put("/users/:id", (req, res) => {
   let user = req.body;
@@ -59,7 +76,7 @@ app.put("/users/:id", (req, res) => {
                        phonenumber = '${user.phonenumber}',
                        password = '${user.password}',
                        email = '${user.email}'
-                       where id = ${req.params.id}`
+                       where id = ${req.params.id}`;
 
   client.query(updateQuery, (err, result) => {
     if (!err) {
@@ -95,4 +112,6 @@ app.delete("/users/:id", (req, res) => {
 //password: "1234"
 //})
 //.then((res) => showoutput(res))
- //.catch((err) => console.error(err, err.response));
+//.catch((err) => console.error(err, err.response));
+
+app.use(errors());
