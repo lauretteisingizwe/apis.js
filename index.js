@@ -59,7 +59,7 @@ app.put("/users/:id", (req, res) => {
                        phonenumber = '${user.phonenumber}',
                        password = '${user.password}',
                        email = '${user.email}'
-                       where id = ${user.id}`
+                       where id = ${req.params.id}`
 
   client.query(updateQuery, (err, result) => {
     if (!err) {
