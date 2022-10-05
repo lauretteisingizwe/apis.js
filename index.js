@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 //const axios = require('axios');
-const port = 3000;
+const port = 3300;
 
 const { celebrate, Joi, errors, Segments } = require('celebrate');
 
@@ -59,10 +59,10 @@ values('${user.email}', '${user.lastname}', '${user.firstname}', '${user.phonenu
     client.query(insertQuery, (err) => {
       if (!err) {
         res.send("Insert was successful");
-      } else {
-        console.log(err.message.details[0]);
-        res.send("there was an error");
-      }
+      } //else {
+        //console.log(err.message);
+        //res.send("there was an error");
+      //}
     });
     client.end;
   }
@@ -83,6 +83,8 @@ app.put("/users/:id", (req, res) => {
       res.send("Update was successful");
     } else {
       console.log(err.message);
+      res.send({ status: 400 });
+
     }
   });
   client.end;
@@ -94,24 +96,10 @@ app.delete("/users/:id", (req, res) => {
       res.send("Delete was successful");
     } else {
       console.log(err.message);
+      res.send({ status: 400 });
     }
+    
   });
   client.end;
 });
-//calling Apis
-//axios.get("http://localhost:5000/users")
-//.then((res) => console.log(res))
-//.catch((err) => console.error(err, err.response));
 
-//axios.post("http://localhost:3000/users/register", {
-//id: "7",
-//email: "rtrt@gmail.com",
-//firstname: "jkjkj",
-//lastNname: "hjhjh",
-//phonenumber: "0780988765",
-//password: "1234"
-//})
-//.then((res) => showoutput(res))
-//.catch((err) => console.error(err, err.response));
-
-app.use(errors());
