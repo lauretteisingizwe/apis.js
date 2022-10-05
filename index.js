@@ -58,7 +58,7 @@ app.post(
 values('${user.email}', '${user.lastname}', '${user.firstname}', '${user.phonenumber}', '${user.password}')`;
     client.query(insertQuery, (err) => {
       if (!err) {
-        res.send("Insert was successful");
+        res.send({status: 200, message: "Insert was successful", token: "jdkfjalkdjfaljd"});
       } //else {
         //console.log(err.message);
         //res.send("there was an error");
