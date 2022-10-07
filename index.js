@@ -101,12 +101,10 @@ app.delete("/users/:id", (req, res) => {
 
 //creating token/hashing password
 
-app.post("/users", async (req, res) => {
-
-  // Our register logic starts here
+app.post("/users/register", async (req, res) => {
   try {
     // Get user input
-    const { first_name, last_name, email, password } = req.body;
+    const { email, lastname, firstname, phonenumber, password } = req.body;
 
     // Validate user input
     if (!(email && lastname && firstname && phonenumber &&  password )) {
@@ -121,7 +119,7 @@ app.post("/users", async (req, res) => {
       return res.status(400).send("User Already Exist ");
     }
 
-    //Encrypt user password
+    //bcrypt user password
     encryptedPassword = await bcrypt.hash(password, 10);
 
     // Create user in our database
@@ -129,8 +127,8 @@ app.post("/users", async (req, res) => {
       firstname,
       lastname,
       phonenumber,
-      password: password.atleast8chsaracters(), 
-      email: email.toLowerCase(), // sanitize: convert email to lowercase
+      password: password.atleast8characters(), 
+      email: email.toLowerCase(), 
       password: encryptedPassword,
     });
 
@@ -146,7 +144,7 @@ app.post("/users", async (req, res) => {
     user.token = token;
 
     // return new user
-    res.status(201).json(user);
+    res.status(200).json(user);
   } catch (err) {
     console.log(err);
   }
