@@ -135,7 +135,7 @@ app.post("/users/register", async (req, res) => {
     // Create token
     const token = jwt.sign(
       { user_id: user._id, email },
-      process.env.TOKEN_KEY,
+      process.TOKEN_KEY,
       {
         expiresIn: "30 min",
       }
