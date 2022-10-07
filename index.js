@@ -2,7 +2,9 @@ const client = require("./connection.js");
 const express = require("express");
 const cors = require("cors");
 const app = express();
-//const axios = require('axios');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+//const config = require('../config');
 const port = 3300;
 
 const { celebrate, Joi, errors, Segments } = require('celebrate');
@@ -35,6 +37,7 @@ app.get("/users/:id", (req, res) => {
   client.end;
 });
 
+
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
 app.post(
@@ -58,11 +61,8 @@ app.post(
 values('${user.email}', '${user.lastname}', '${user.firstname}', '${user.phonenumber}', '${user.password}')`;
     client.query(insertQuery, (err) => {
       if (!err) {
-        res.send({status: 200, message: "Insert was successful", token: "jdkfjalkdjfaljd"});
-      } //else {
-        //console.log(err.message);
-        //res.send("there was an error");
-      //}
+        res.send({status: 200, message: "Insert was successful"});
+      }
     });
     client.end;
   }
@@ -80,7 +80,7 @@ app.put("/users/:id", (req, res) => {
 
   client.query(updateQuery, (err, result) => {
     if (!err) {
-      res.send("Update was successful");
+      res.send({status: 200, message: "successfully upated"});
     } else {
       console.log(err.message);
       res.send({ status: 400 });
@@ -93,13 +93,61 @@ app.delete("/users/:id", (req, res) => {
   let insertQuery = `delete from users where id=${req.params.id}`;
   client.query(insertQuery, (err) => {
     if (!err) {
-      res.send("Delete was successful");
-    } else {
-      console.log(err.message);
-      res.send({ status: 400 });
-    }
-    
+      res.send({status: 200, message: "successful delete"});
+    } 
   });
   client.end;
 });
 
+//creating token/hashing password
+
+app.post("/users", async (req, res) => {
+
+  // Our register logic starts here
+  try {
+    // Get user input
+    const { first_name, last_name, email, password } = req.body;
+
+    // Validate user input
+    if (!(email && lastname && firstname && phonenumber &&  password )) {
+      res.status(400).send("All input is required");
+    }
+
+    // check if user already exist
+    // Validate if user exist in our database
+    const oldUser = await User.findOne({ email });
+
+    if (oldUser) {
+      return res.status(400).send("User Already Exist ");
+    }
+
+    //Encrypt user password
+    encryptedPassword = await bcrypt.hash(password, 10);
+
+    // Create user in our database
+    const user = await User.create({
+      firstname,
+      lastname,
+      phonenumber,
+      password: password.atleast8chsaracters(), 
+      email: email.toLowerCase(), // sanitize: convert email to lowercase
+      password: encryptedPassword,
+    });
+
+    // Create token
+    const token = jwt.sign(
+      { user_id: user._id, email },
+      process.env.TOKEN_KEY,
+      {
+        expiresIn: "30 min",
+      }
+    );
+    // save user token
+    user.token = token;
+
+    // return new user
+    res.status(201).json(user);
+  } catch (err) {
+    console.log(err);
+  }
+});
