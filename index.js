@@ -2,14 +2,15 @@ const client = require("./connection.js");
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 //const config = require('../config');
 const port = 3300;
 
-const { celebrate, Joi, errors, Segments } = require('celebrate');
+const { celebrate, Joi, errors, Segments } = require("celebrate");
 
 app.use(cors());
+app.use(express.json());
 
 app.listen(port, () => {
   console.log("Sever is now listening at port " + port);
@@ -37,41 +38,53 @@ app.get("/users/:id", (req, res) => {
   client.end;
 });
 
-
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
 app.post(
   "/users",
-  celebrate({
-    [Segments.BODY]: Joi.object().keys({
-      email: Joi.string().required(),
-      lastname: Joi.string().required(),
-      firstname: Joi.string().required(),
-      phonenumber: Joi.number().required(),
-      password: Joi.string().min(4).required()
-    })
-  }),
-  (req, res) => {
-    const user = req.body;
-    console.log(req.body);
-    if (!user.email || !user.password || !user.lastname)
-      res.send({ status: 400, message: "Please fill all fields" });
-
+ app.post =  async (req, res) => {
+    const {  email, lastname, firstname,  phonenumber, password } =  req.body;
+    try {
+   const  data  =  await client.query(`SELECT * FROM users WHERE email= $1;`, [email]); //Checking if user already exists
+    const  arr  =  data.rows;
+    if (arr.length  !=  0) {
+    return  res.status(400).json({
+    error: "email already exists.",
+    });
+    }
+    else {
+    bcrypt.hash(password, 10, (err, hash) => {
+    if (err)
+    res.status(err).json({
+    error: "Server error",
+    });
+    const  user  = {
+    email,
+    lastname,
+    firstname,
+    phonenumber,
+    password: hash,
+    };
+    (req, res) => {
+      const user = req.body;
+      console.log(req.body);
+    
+    //Inserting data into the database
+    
     let insertQuery = `insert into users(email,lastname,firstname,phonenumber,password) 
-values('${user.email}', '${user.lastname}', '${user.firstname}', '${user.phonenumber}', '${user.password}')`;
+    values('${user.email}', '${user.lastname}', '${user.firstname}', '${user.phonenumber}', '${user.password}')`;
     client.query(insertQuery, (err) => {
       if (!err) {
-        res.send({status: 200, message: "Insert was successful"});
+        res.send({ status: 200, message: "Insert was successful" });
       }
     });
-    client.end;
   }
-);
-
+   
+//editing a user
 app.put("/users/:id", (req, res) => {
   let user = req.body;
   let updateQuery = `update users
-                       set lastname = '${user.lastname}',
+                      set lastname = '${user.lastname}',
                        firstname = '${user.firstname}',
                        phonenumber = '${user.phonenumber}',
                        password = '${user.password}',
@@ -80,72 +93,25 @@ app.put("/users/:id", (req, res) => {
 
   client.query(updateQuery, (err, result) => {
     if (!err) {
-      res.send({status: 200, message: "successfully upated"});
+      res.send({ status: 200, message: "successfully updated" });
     } else {
       console.log(err.message);
       res.send({ status: 400 });
-
     }
   });
   client.end;
-});
-app.delete("/users/:id", (req, res) => {
-  let insertQuery = `delete from users where id=${req.params.id}`;
-  client.query(insertQuery, (err) => {
-    if (!err) {
-      res.send({status: 200, message: "successful delete"});
-    } 
-  });
-  client.end;
-});
-
-//creating token/hashing password
-
-app.post("/users/register", async (req, res) => {
-  try {
-    // Get user input
-    const { email, lastname, firstname, phonenumber, password } = req.body;
-
-    // Validate user input
-    if (!(email && lastname && firstname && phonenumber &&  password )) {
-      res.status(400).send("All input is required");
-    }
-
-    // check if user already exist
-    // Validate if user exist in our database
-    const oldUser = await User.findOne({ email });
-
-    if (oldUser) {
-      return res.status(400).send("User Already Exist ");
-    }
-
-    //bcrypt user password
-    encryptedPassword = await bcrypt.hash(password, 10);
-
-    // Create user in our database
-    const user = await User.create({
-      firstname,
-      lastname,
-      phonenumber,
-      password: password.atleast8characters(), 
-      email: email.toLowerCase(), 
-      password: encryptedPassword,
-    });
-
-    // Create token
-    const token = jwt.sign(
-      { user_id: user._id, email },
-      process.TOKEN_KEY,
-      {
-        expiresIn: "30 min",
+}),
+  //deleting a user
+  app.delete("/users/:id", (req, res) => {
+    let insertQuery = `delete from users where id=${req.params.id}`;
+    client.query(insertQuery, (err) => {
+      if (!err) {
+        res.send({ status: 200, message: "successful delete" });
       }
-    );
-    // save user token
-    user.token = token;
-
-    // return new user
-    res.status(200).json(user);
-  } catch (err) {
-    console.log(err);
+    });
+    client.end;
+    }) 
+   
   }
-});
+    ) 
+  
