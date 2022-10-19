@@ -4,7 +4,7 @@ const cors = require("cors");
 const app = express();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-//const config = require('../config');
+require ('dotenv').config()
 const port = 3300;
 
 const { celebrate, Joi, errors, Segments } = require("celebrate");
@@ -37,53 +37,50 @@ app.get("/users/:id", (req, res) => {
   );
   client.end;
 });
-
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
-app.post(
-  "/users",
- app.post =  async (req, res) => {
-    const {  email, lastname, firstname,  phonenumber, password } =  req.body;
-    try {
-   const  data  =  await client.query(`SELECT * FROM users WHERE email= $1;`, [email]); //Checking if user already exists
-    const  arr  =  data.rows;
-    if (arr.length  !=  0) {
-    return  res.status(400).json({
-    error: "email already exists.",
-    });
-    }
-    else {
-    bcrypt.hash(password, 10, (err, hash) => {
-    if (err)
-    res.status(err).json({
-    error: "Server error",
-    });
-    const  user  = {
-    email,
-    lastname,
-    firstname,
-    phonenumber,
-    password: hash,
-    };
-    (req, res) => {
-      const user = req.body;
-      console.log(req.body);
-    
-    //Inserting data into the database
-    
-    let insertQuery = `insert into users(email,lastname,firstname,phonenumber,password) 
+app.post("/users", async (req, res) => {
+  const user = req.body;
+  console.log(req.body);
+
+  // Validate user input
+  if (!user.email || !user.lastname || !user.password)
+    res.send({ status: 400, message: "Please fill all fields" });
+
+  let insertQuery = `insert into users(email,lastname,firstname,phonenumber,password)
     values('${user.email}', '${user.lastname}', '${user.firstname}', '${user.phonenumber}', '${user.password}')`;
-    client.query(insertQuery, (err) => {
-      if (!err) {
-        res.send({ status: 200, message: "Insert was successful" });
-      }
+  client.query(insertQuery, (err) => {
+    if (!err) {
+      res.send({ status: 200, message: "Insert was successful" });
+    }
+  });
+  const { email, lastname, firstname, phonenumber, password } = req.body;
+  try {
+    const data = await client.query(`SELECT * FROM users WHERE email= $1;`, [
+      email,
+    ]); //Checking if user already exists
+    const arr = data.rows;
+    if (arr.length != 0) {
+      return res.status(400).json({
+        error: "Email already exists.",
+      });
+    }
+  
+    // Create token
+    const accessToken= jwt.sign(user, proccess.env.ACCESS_SECRET_TOKEN)
+    res.json({accessToken: accessToken})
+    
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      error: "Database error while registring user!", //Database connection error
     });
   }
-   
-//editing a user
-app.put("/users/:id", (req, res) => {
-  let user = req.body;
-  let updateQuery = `update users
+
+  // editing a user
+  app.put("/users/:id", (req, res) => {
+    let user = req.body;
+    let updateQuery = `update users
                       set lastname = '${user.lastname}',
                        firstname = '${user.firstname}',
                        phonenumber = '${user.phonenumber}',
@@ -91,16 +88,17 @@ app.put("/users/:id", (req, res) => {
                        email = '${user.email}'
                        where id = ${req.params.id}`;
 
-  client.query(updateQuery, (err, result) => {
-    if (!err) {
-      res.send({ status: 200, message: "successfully updated" });
-    } else {
-      console.log(err.message);
-      res.send({ status: 400 });
-    }
+    client.query(updateQuery, (err, result) => {
+      if (!err) {
+        res.send({ status: 200, message: "successfully updated" });
+      } else {
+        console.log(err.message);
+        res.send({ status: 400 });
+      }
+    });
+    client.end;
   });
-  client.end;
-}),
+
   //deleting a user
   app.delete("/users/:id", (req, res) => {
     let insertQuery = `delete from users where id=${req.params.id}`;
@@ -110,8 +108,5 @@ app.put("/users/:id", (req, res) => {
       }
     });
     client.end;
-    }) 
-   
-  }
-    ) 
-  
+  });
+});
