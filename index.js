@@ -48,7 +48,7 @@ app.post("/register", async (req, res) => {
     return res.send({ status: 400, message: "Please fill all fields" });
 
   if (user.password.length < 6)
-    return res.send({ status: 400, message: "Password should be atleast 6 characters" });
+    return res.send({ status: 400, message: "Password should be atleast 6 chatacters" });
   try {
     const data = await client.query(`SELECT * FROM users WHERE email= $1;`, [
       user.email,
