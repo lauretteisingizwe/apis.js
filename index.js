@@ -8,8 +8,6 @@ const { validateToken } = require("./authmiddleware");
 require("dotenv").config();
 const port = 3300;
 
-const { celebrate, Joi, errors, Segments } = require("celebrate");
-
 app.use(cors());
 app.use(express.json());
 
@@ -40,74 +38,8 @@ app.get("/users/:data", (req, res) => {
 });
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
-// app.post("/register", async (req, res) => {
-//   const user = req.body;
-//    //user.password= bcrypt.hashSync(user.password,4)
-//   if (!user.email || !user.lastname || !user.password)
-//     res.send({ status: 400, message: "Please fill all fields" });
 
-//   let insertQuery = `insert into users(email,lastname,firstname,phonenumber,password)
-//     values('${user.email}', '${user.lastname}', '${user.firstname}', '${user.phonenumber}', '${user.password}')`;
-//   client.query(insertQuery, (err) => {
-//     if (!err) {
-//       res.send({ status: 200, message: "Insert was successful" });
-//     }
-//   });
-//   const { email, lastname, firstname, phonenumber, password } = req.body;
-//   try {
-//     const data = await client.query(`SELECT * FROM users WHERE email= $1;`, [
-//       email,
-//     ]); //Checking if user already exists
-//     const arr = data.rows;
-//     if (arr.length != 0) {
-//       return res.status(400).json({
-//         error: "Email already exists.",
-//       });
-//     }
-
-//     // Create token
-//    // const accessToken = jwt.sign(user, proccess.env.ACCESS_SECRET_TOKEN);
-//     //res.json({ accessToken: accessToken });
-//   } catch (err) {
-//     console.log(err);
-//     res.status(400).json({
-//       error: "Database error while registring user!", //Database connection error
-//     });
-//   }
-
-//   // editing a user
-//   app.put("/users/:id", (req, res) => {
-//     let user = req.body;
-//     let updateQuery = `update users
-//                       set lastname = '${user.lastname}',
-//                        firstname = '${user.firstname}',
-//                        phonenumber = '${user.phonenumber}',
-//                        password = '${user.password}',
-//                        email = '${user.email}'
-//                        where id = ${req.params.id}`;
-
-//     client.query(updateQuery, (err, result) => {
-//       if (!err) {
-//         res.send({ status: 200, message: "successfully updated" });
-//       } else {
-//         console.log(err.message);
-//         res.send({ status: 400 });
-//       }
-//     });
-//     client.end;
-//   });
-
-//   //deleting a user
-//   app.delete("/users/:id", (req, res) => {
-//     let insertQuery = `delete from users where id=${req.params.id}`;
-//     client.query(insertQuery, (err) => {
-//       if (!err) {
-//         res.send({ status: 200, message: "successful delete" });
-//       }
-//     });
-//     client.end;
-//   });
-// });
+// registering a user
 
 app.post("/register", async (req, res) => {
   const user = req.body;
@@ -138,12 +70,13 @@ app.post("/register", async (req, res) => {
     values('${user.email}', '${user.lastname}', '${user.firstname}', '${user.phonenumber}', '${user.password}')`;
   client.query(insertQuery, (err) => {
     if (!err) {
-      res.send({ status: 200, message: "Insert was successful" });
+      res.send({ status: 200, message: "registered!" });
     }
   });
   return res.json(user);
 });
-//login
+
+// login user
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -156,32 +89,21 @@ app.post("/login", async (req, res) => {
         error: "User is not registered, Sign Up first",
       });
     } else {
-      // bcrypt.compare(password, user[0].password, (err, result) => {
-      //   //Comparing the hashed password
-      //   if (err) {
-      //     res.status(500).json({
-      //       error: "Server error",
-      //     });
-      //   } else if (result === true) {
-      //     //Checking if credentials match
-      //     const token = jwt.sign(
-      //       {
-      //         email: email,
-      //       },
-      //       process.env.SECRET_KEY
-      //     );
-      //     res.status(200).json({
-      //       message: "User signed in!",
-      //       token: token,
-      //     });
-      //   } else {
-      //     //Declaring the errors
-      //     if (result != true)
-      //       res.status(400).json({
-      //         error: "Enter correct password!",
-      //       });
-      //   }
-      // });
+      bcrypt.compare(password, user[0].password, (err, result) => {
+        //Comparing the hashed password
+        if (err) {
+          res.status(500).json({
+            error: "Server error",
+          });
+         
+        } else {
+         //Declaring the errors
+           if (result != true)
+             res.status(400).json({
+              error: "Enter correct password!",
+            });
+        }
+       });
       if (data.rows[0].password != password) {
         return res.status(400).json({
           error: "Enter correct password!",
@@ -210,6 +132,7 @@ app.post("/login", async (req, res) => {
     });
   }
 });
+
 //deleting a user
 app.delete("/users/:id", validateToken, (req, res) => {
   let insertQuery = `delete from users where id=${req.params.id}`;
