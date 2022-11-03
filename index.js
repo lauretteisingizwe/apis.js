@@ -48,7 +48,10 @@ app.post("/register", async (req, res) => {
     return res.send({ status: 400, message: "Please fill all fields" });
 
   if (user.password.length < 6)
-    return res.send({ status: 400, message: "Password should be atleast 6 chatacters" });
+    return res.send({
+      status: 400,
+      message: "Password should be atleast 6 characters",
+    });
   try {
     const data = await client.query(`SELECT * FROM users WHERE email= $1;`, [
       user.email,
@@ -70,10 +73,9 @@ app.post("/register", async (req, res) => {
     values('${user.email}', '${user.lastname}', '${user.firstname}', '${user.phonenumber}', '${user.password}')`;
   client.query(insertQuery, (err) => {
     if (!err) {
-      res.send({ status: 200, message: "registered!" });
+      res.send({ status: 200, message: "registered!", data: user });
     }
   });
-  return res.json(user);
 });
 
 // login user
@@ -91,39 +93,35 @@ app.post("/login", async (req, res) => {
     } else {
       bcrypt.compare(password, user[0].password, (err, result) => {
         //Comparing the hashed password
+        console.log(result);
         if (err) {
           res.status(500).json({
             error: "Server error",
           });
-         
         } else {
-         //Declaring the errors
-           if (result != true)
-             res.status(400).json({
+          //Declaring the errors
+          if (result != true)
+            res.status(400).json({
               error: "Enter correct password!",
             });
+          else {
+            const accessToken = jwt.sign(
+              {
+                email: email,
+                lastname: data.rows[0].lastname,
+              },
+              // {
+              // expiresIn: "30min"
+              // },
+              process.env.ACCESS_TOKEN_SECRET
+            );
+            res.status(200).json({
+              message: "User signed in!",
+              token: accessToken,
+            });
+          }
         }
-       });
-      if (data.rows[0].password != password) {
-        return res.status(400).json({
-          error: "Enter correct password!",
-        });
-      } else {
-        const accessToken = jwt.sign(
-          {
-            email: email,
-            lastname: data.rows[0].lastname,
-          },
-          // {
-          // expiresIn: "30min"
-          // },
-          process.env.ACCESS_TOKEN_SECRET
-        );
-        res.status(200).json({
-          message: "User signed in!",
-          token: accessToken,
-        });
-      }
+      });
     }
   } catch (err) {
     console.log(err);
